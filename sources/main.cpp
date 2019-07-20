@@ -24,7 +24,7 @@ int main()
 	pthread_t uart_id, videoImg_id, Classify_id;
 
 	
-	#if 0
+	#if 1
 	std::cout << "---------- Init UART ----------" << std::endl;
 	JetsonUart = jetsonSerial::getInstance();
 
@@ -33,7 +33,7 @@ int main()
 
 	std::cout << "---------- Start Get data through UART ----------" << std::endl;
 	uart_id = JetsonUart->startThread();
-	pthread_join(uart_id, NULL);
+	
 	#endif
 
 	std::cout << "---------- Loading model sysfile ----------" << std::endl;
@@ -52,6 +52,12 @@ int main()
 	}
 	JetsonVideo->Init_VideoWriteFileStorage(1280,720);  //configurate the video resolution;
 
+	std::cout << "---------- Prediction ----------" << std::endl;
+	Classify_id = JetsonVideo->startThread_classify();
+
+	std::cout << "---------- SaveVideoSpeed ----------" << std::endl;
+	videoImg_id = JetsonVideo->startThread_saveVideoSpeed();
+
 	atexit(server_on_exit);
 	signal(SIGINT,signal_exit_handler);  //Response the "kill the process"
 	signal(SIGTERM,signal_exit_handler); //Response the "Ctrl+C end foreground process"
@@ -64,8 +70,11 @@ int main()
 	signal(SIGSEGV,signal_crash_handler);//non illegal access memory
 	signal(SIGBUS,signal_crash_handler);//bus error
 	
+	#if 0
 	bool ifStart = false;
 	bool ifCancel = false;
+	bool isRun = false;
+	#endif
 
 	while (true)
 	{
@@ -74,12 +83,13 @@ int main()
 			break;
 		}
 		
-		if(VehicleSpeed>0)
+		#if 0
+		if( VehicleSpeed!=0)//the speed may >0 or <0 express had run
 				ifStart = true;
 		else
 				ifCancel = true;
 		
-		if(ifStart)
+		if(ifStart && (!isRun))
 		{
 			std::cout << "---------- Prediction ----------" << std::endl;
 			Classify_id = JetsonVideo->startThread_classify();
@@ -88,9 +98,11 @@ int main()
 			videoImg_id = JetsonVideo->startThread_saveVideoSpeed();
 			
 			ifStart = false;
+			isRun = true;
+			
 		}
 		
-		if(ifCancel)
+		if(ifCancel && isRun)
 		{
 
 			pthread_cancel(Classify_id);
@@ -98,11 +110,15 @@ int main()
 			pthread_join(Classify_id,NULL);
 			pthread_join(videoImg_id,NULL);
 			ifCancel = false;
+			isRun = false;
 
 		}
+		#endif
+		
 
 	}
 	
+	pthread_join(uart_id, NULL);
 	return 0;
 }
 

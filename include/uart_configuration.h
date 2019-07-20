@@ -104,7 +104,7 @@ class jetsonSerial
 
        pthread_t startThread();
 
-       void Send_TriggerVoice();  //use uart to trigger the vehicle voice and lighting
+       void Send_TriggerVoice(int flag);  //use uart to trigger the vehicle voice and lighting
 
        uint8_t receiv_buf[100];
 

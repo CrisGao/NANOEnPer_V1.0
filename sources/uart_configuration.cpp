@@ -103,11 +103,24 @@ void* CallGet_Speed(void *ptr)
 	
 }
 
-void jetsonSerial::Send_TriggerVoice()
+void jetsonSerial::Send_TriggerVoice(int flag)
 {
 	uint8_t send_cmd = 0x11;
+	uint8_t send_params; 
 
-	IM_PackDataToTransmitter(transceiver,rand()%256,0XFFFFFFFF,3,&send_cmd,1,NULL,sizeof(NULL),PARITY);
+	if(flag ==1)
+	{
+	send_params = 0x01; //open the voice
+	std::cout<<"open the voice"<<std::endl;
+	}
+	else if(flag == 0)
+	{
+	send_params = 0x00; //close the voice
+	std::cout<<"close the voice"<<std::endl;
+	}
+	
+	std::cout<<"the rand() is "<<rand()%256<<std::endl;
+	IM_PackDataToTransmitter(transceiver,rand()%256,0XFFFFFFFF,3,&send_cmd,1,&send_params,sizeof(send_params),PARITY);
 
 	uint8_t *send_data;
 	uint16_t send_length;

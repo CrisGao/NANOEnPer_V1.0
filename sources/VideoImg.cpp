@@ -272,8 +272,8 @@ void VideoImg::Init_Classify(string model_file,string trained_file,string mean_f
 {
 	newClassf = new Classifier(model_file, trained_file, mean_file, label_file); 
 	/****init GPIO********/
-	gpio_export(gpio);
-	gpio_set_dir(gpio, 1);
+	//gpio_export(gpio);
+	//gpio_set_dir(gpio, 1);
 }
 
 pthread_t VideoImg::startThread_classify()
@@ -317,7 +317,7 @@ void *Classify_Work(void *ptr)
 		if (QueuePrediction(input_image))
 		{
 		
-		#if 1
+		#if 0
 			if (pthread_create(&Buzzer_thread_id, NULL, play_buzzer, NULL))
 			{
 				std::cout << "Buzzer_thread create error!" << std::endl;
@@ -331,12 +331,13 @@ void *Classify_Work(void *ptr)
 			}
 			
 		#endif
-		#if 0
-			JetsonUartInClassify->Send_TriggerVoice();
+		#if 1
+			JetsonUartInClassify->Send_TriggerVoice(1);
 		#endif
 		}
 		else
 		{
+			JetsonUartInClassify->Send_TriggerVoice(0);
 			std::cout<<"the nums of Queue is not enough or 20 frames less than 10 roadway"<<std::endl;
 		}
 	
@@ -441,7 +442,7 @@ void VideoImg::deleteSources()
 	
 	pthread_mutex_destroy(&Img_mutex);
 
-	gpio_unexport(gpio);//relase the GPIO79
+	//gpio_unexport(gpio);//relase the GPIO79
 
 	std::cout<<"had delete all sources"<<std::endl;
 }
