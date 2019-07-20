@@ -38,9 +38,14 @@ bool trigger = false;
 
 /******************/
 
+int Frame_i = 0;
+cv::FileStorage fs;
+cv::VideoWriter writer;
+/*****************/
+
 VideoImg::VideoImg()
 {
-
+	
 }
 
 VideoImg::~VideoImg()
@@ -101,12 +106,9 @@ pthread_t VideoImg::startThread_saveVideoSpeed()
 	}
 }
 
-void *WriteVideo_Speed(void *ptr)
+void VideoImg::Init_VideoWriteFileStorage(int save_Width,int save_Height)
 {
-
-	int i = 0;
-
-	std::string imageFileName, Videoname, VideoSpeedFilename;
+	std::string Videoname, VideoSpeedFilename;
 
 	Videoname = "../video/" + currentTime() + ".avi";
 	std::cout << "Videoname:" << Videoname << std::endl;
@@ -114,9 +116,14 @@ void *WriteVideo_Speed(void *ptr)
 	VideoSpeedFilename = "../Speeds/" + currentTime() + ".yml";
 	std::cout << "Save Speed YML in :" << VideoSpeedFilename << std::endl;
 
-	cv::FileStorage fs(VideoSpeedFilename, cv::FileStorage::WRITE);
+	fs = cv::FileStorage(VideoSpeedFilename, cv::FileStorage::WRITE);
 
-	cv::VideoWriter writer = cv::VideoWriter(Videoname, CV_FOURCC('M', 'J', 'P', 'G'), 20, cv::Size(1280, 720), 1);
+        writer = cv::VideoWriter(Videoname, CV_FOURCC('M', 'J', 'P', 'G'), 20, cv::Size(save_Width, save_Height), 1);
+}
+
+void *WriteVideo_Speed(void *ptr)
+{
+	std::string imageFileName;
 
 	while (1)
 	{
@@ -135,7 +142,7 @@ void *WriteVideo_Speed(void *ptr)
 
 		if (fs.isOpened())
 		{
-			imageFileName = "Frame" + std::to_string(i);
+			imageFileName = "Frame" + std::to_string(Frame_i);
 
 			std::cout << "save sequences:" << imageFileName << ",speed:" << VehicleSpeed << std::endl;
 
@@ -147,12 +154,10 @@ void *WriteVideo_Speed(void *ptr)
 			break;
 		}
 
-		i++;
+		Frame_i++;
 
 	}
-
-	fs.release();
-	writer.release();
+	
 	
 }
 
@@ -265,7 +270,10 @@ void *play_buzzer(void *ptr)
 
 void VideoImg::Init_Classify(string model_file,string trained_file,string mean_file,string label_file)
 {
-	newClassf = new Classifier(model_file, trained_file, mean_file, label_file); //为防止new多个对象，取消线程的时候delete对象。另一方面可以把类写成单例模式
+	newClassf = new Classifier(model_file, trained_file, mean_file, label_file); 
+	/****init GPIO********/
+	gpio_export(gpio);
+	gpio_set_dir(gpio, 1);
 }
 
 pthread_t VideoImg::startThread_classify()
@@ -286,21 +294,6 @@ pthread_t VideoImg::startThread_classify()
 void *Classify_Work(void *ptr)
 {
 
-	
-	gpio_export(gpio);
-	gpio_set_dir(gpio, 1);
-
-
-	/**************initivate the Classifier Class**************/
-	#if 0
-	string model_file = "../data/deploy.prototxt";
-	string trained_file = "../data/3caffe_train_iter_600000.caffemodel";
-	string mean_file = "../data/mean.binaryproto";
-	string label_file = "../data/label.txt";
-
-	newClassf = new Classifier(model_file, trained_file, mean_file, label_file); //为防止new多个对象，取消线程的时候delete对象。另一方面可以把类写成单例模式
-	#endif
-	/**************End**************/
 
 	/********initivate the uart class************/
 	jetsonSerial *JetsonUartInClassify = jetsonSerial::getInstance();
@@ -438,7 +431,9 @@ Prediction GetPreScore_Max(cv::Mat Input_img)
 
 void VideoImg::deleteSources()
 {
-	
+	Frame_i = 0;
+	fs.release();
+	writer.release();
 
 	delete newClassf;
 

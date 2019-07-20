@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 2.8)
 
-project(NanoEnvirPer)
+project(NANOEnPer_V1)
 
 find_package(Threads)
 find_package(OpenCV REQUIRED)
@@ -34,9 +34,9 @@ aux_source_directory(./sources DIR_SRCS)
 #设置debug模式,当需要用vscode的时候开启
 #set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g")
 
-add_executable(NanoEnvirPer ${DIR_SRCS})
+add_executable(NANOEnPer_V1 ${DIR_SRCS})
 
-target_link_libraries(NanoEnvirPer 
+target_link_libraries(NANOEnPer_V1 
 			/home/leon/CAFFE/caffe/build/lib/libcaffe.so
 			/usr/lib/aarch64-linux-gnu/libglog.so
 			/usr/lib/aarch64-linux-gnu/libboost_system.so

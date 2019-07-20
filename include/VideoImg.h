@@ -42,6 +42,8 @@ public:
 
     void Init_Classify(string model_file,string trained_file,string mean_file,string label_file);
 
+    void Init_VideoWriteFileStorage(int save_Width,int save_Height);
+
     pthread_t startThread_saveVideoSpeed();
 
     pthread_t startThread_classify();
