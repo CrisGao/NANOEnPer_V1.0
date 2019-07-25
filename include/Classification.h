@@ -22,6 +22,7 @@ class Classifier
 {
 public:
   /***设置成单例模式，避免每次都需要重新加载模型**/
+#if 0
   static Classifier* getInstance(const string &model_file,
              const string &trained_file,
              const string &mean_file,
@@ -33,10 +34,10 @@ public:
            					    trained_file,
             					    mean_file,
              					    label_file);
-			return m_pInstance;
 		}
+		return m_pInstance;
 	}
-
+#endif
   Classifier (const string &model_file,
              const string &trained_file,
              const string &mean_file,
@@ -46,7 +47,7 @@ public:
 
 private:
 	
-  static Classifier* m_pInstance;
+  //static Classifier* m_pInstance;
 
   void SetMean(const string &mean_file);
 

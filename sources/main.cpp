@@ -7,10 +7,21 @@
 
 #include <signal.h>
 
+#define filename(x) strrchr(x,'/')
+
+#define __DEBUG__ 1
+#if __DEBUG__ 
+#define DEBUG(format,...) printf("[File:" __FILE__ ",LINE:%03d]" format "\n", __LINE__, ##__VA_ARGS__)
+#define LOGG(s) printf("[%s,%d] %s\n",filename(__FILE__),__LINE__,s)
+#else
+#define DEBUG(format,...)
+#define LOGG(s) NULL
+#endif
+
 extern double VehicleSpeed;
 
-VideoImg *JetsonVideo; 
-jetsonSerial *JetsonUart;
+VideoImg* JetsonVideo; 
+jetsonSerial* JetsonUart;
 
 void server_on_exit(void);
 
@@ -18,10 +29,13 @@ void signal_exit_handler(int sig);
 
 void signal_crash_handler(int sig);
 
+
+pthread_t uart_id, videoImg_id, Classify_id;
+
 int main()
 {
 
-	pthread_t uart_id, videoImg_id, Classify_id;
+	//pthread_t uart_id, videoImg_id, Classify_id;
 
 	
 	#if 1
@@ -34,101 +48,82 @@ int main()
 	std::cout << "---------- Start Get data through UART ----------" << std::endl;
 	uart_id = JetsonUart->startThread();
 	
-	#endif
-
-	std::cout << "---------- Loading model sysfile ----------" << std::endl;
-	string model_file = "../data/deploy.prototxt";
-	string trained_file = "../data/3caffe_train_iter_600000.caffemodel";
-	string mean_file = "../data/mean.binaryproto";
-	string label_file = "../data/label.txt";
-	JetsonVideo->Init_Classify(model_file, trained_file, mean_file, label_file); //load the caffe model
+	
 
 	
 	std::cout << "---------- InitCamera ----------" << std::endl;
 	JetsonVideo = new VideoImg();
 	if (!JetsonVideo->InitCamera(3280, 2464, 1280, 720, 20, 2))  // configurate the CSI camera stream
 	{
+		LOGG("CANNOT INIT CAMERA");
 		return -1;
 	}
-	JetsonVideo->Init_VideoWriteFileStorage(1280,720);  //configurate the video resolution;
+#endif
+#if 0
+	std::cout << "---------- Loading model sysfile ----------" << std::endl;
+	string model_file = "../data/deploy.prototxt";
+	string trained_file = "../data/3caffe_train_iter_600000.caffemodel";
+	string mean_file = "../data/mean.binaryproto";
+	string label_file = "../data/label.txt";
+	JetsonVideo->Init_Classify(model_file,trained_file,mean_file,label_file);
+#endif
 
-	std::cout << "---------- Prediction ----------" << std::endl;
-	Classify_id = JetsonVideo->startThread_classify();
-
-	std::cout << "---------- SaveVideoSpeed ----------" << std::endl;
-	videoImg_id = JetsonVideo->startThread_saveVideoSpeed();
-
+#if 1
 	atexit(server_on_exit);
 	signal(SIGINT,signal_exit_handler);  //Response the "kill the process"
 	signal(SIGTERM,signal_exit_handler); //Response the "Ctrl+C end foreground process"
 	
-	//ignore SIGPIPE
-	signal(SIGPIPE,SIG_IGN);
 	
 	//non normal exit
 	signal(SIGABRT,signal_crash_handler);//use aboart to exit
 	signal(SIGSEGV,signal_crash_handler);//non illegal access memory
 	signal(SIGBUS,signal_crash_handler);//bus error
-	
-	#if 0
-	bool ifStart = false;
-	bool ifCancel = false;
-	bool isRun = false;
-	#endif
+#endif
+std::cout << "---------- Start Prediction ----------" << std::endl;
+		Classify_id = JetsonVideo->startThread_classify();
 
-	while (true)
+	std::cout << "---------- START for Work ----------" << std::endl;
+	while (1)
 	{
+		#if 1
 		if (!JetsonVideo->startCamera())
 		{
 			break;
 		}
-		
+		#endif
 		#if 0
-		if( VehicleSpeed!=0)//the speed may >0 or <0 express had run
-				ifStart = true;
-		else
-				ifCancel = true;
-		
-		if(ifStart && (!isRun))
+		if(JetsonVideo->ifGetImageFromCamera())	
 		{
-			std::cout << "---------- Prediction ----------" << std::endl;
-			Classify_id = JetsonVideo->startThread_classify();
+		//std::cout<<"--------------Start VideoSpeed-----------"<<std::endl;
+		//videoImg_id = JetsonVideo->startThread_saveVideoSpeed();
 
-			std::cout << "---------- SaveVideoSpeed ----------" << std::endl;
-			videoImg_id = JetsonVideo->startThread_saveVideoSpeed();
-			
-			ifStart = false;
-			isRun = true;
-			
-		}
+		std::cout << "---------- Start Prediction ----------" << std::endl;
+		Classify_id = JetsonVideo->startThread_classify();
 		
-		if(ifCancel && isRun)
-		{
-
-			pthread_cancel(Classify_id);
-			pthread_cancel(videoImg_id);
-			pthread_join(Classify_id,NULL);
-			pthread_join(videoImg_id,NULL);
-			ifCancel = false;
-			isRun = false;
-
 		}
 		#endif
 		
-
+   		if(cv::waitKey(30)>0)
+		break;
 	}
-	
+	pthread_cancel(uart_id);
 	pthread_join(uart_id, NULL);
+	pthread_exit(NULL);
 	return 0;
 }
 
 void server_on_exit(void)
 {
+	pthread_cancel(videoImg_id);
+	pthread_cancel(Classify_id);
+	pthread_cancel(uart_id);
+
 	JetsonVideo->deleteSources();
         delete JetsonVideo;
 	delete JetsonUart;
 	JetsonVideo = NULL;
-	JetsonUart  = NULL;	
+	JetsonUart  = NULL;
+	LOGG("HAD SUCCESS EXIT");	
 }
 
 void signal_exit_handler(int sig)
@@ -139,5 +134,12 @@ void signal_exit_handler(int sig)
 
 void signal_crash_handler(int sig)
 {
+	JetsonVideo->deleteSources ();
+        delete JetsonVideo;
+	delete JetsonUart;
+	JetsonVideo = NULL;
+	JetsonUart  = NULL;
+	LOGG("UNNORMA EXIT");
 	exit(-1);
 }
+

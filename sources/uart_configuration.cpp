@@ -2,6 +2,18 @@
 #include <stdio.h>
 #include <ctime>
 
+#define filename(x) strrchr(x,'/')
+
+#define __DEBUG__ 1
+#if __DEBUG__ 
+#define DEBUG(format,...) printf("[File:" __FILE__ ",LINE:%03d]" format "\n", __LINE__, ##__VA_ARGS__)
+#define LOGG(s) printf("[%s,%d] %s\n",filename(__FILE__),__LINE__,s)
+#else
+#define DEBUG(format,...)
+#define LOGG(s) NULL
+#endif
+
+
 int8_t jetsonSerial::transceiver =0;
 
 int jetsonSerial::fd =0;
@@ -17,7 +29,7 @@ jetsonSerial::jetsonSerial()
 
 jetsonSerial::~jetsonSerial()
 {
-       pthread_exit(&uart_thread_id);
+       pthread_exit(NULL);
 
        UART0_Close(fd);
 }
@@ -111,15 +123,15 @@ void jetsonSerial::Send_TriggerVoice(int flag)
 	if(flag ==1)
 	{
 	send_params = 0x01; //open the voice
-	std::cout<<"open the voice"<<std::endl;
+	LOGG("OpenVoice!!!");
 	}
 	else if(flag == 0)
 	{
 	send_params = 0x00; //close the voice
-	std::cout<<"close the voice"<<std::endl;
+	LOGG("CloseVoice!!!");
 	}
 	
-	std::cout<<"the rand() is "<<rand()%256<<std::endl;
+	
 	IM_PackDataToTransmitter(transceiver,rand()%256,0XFFFFFFFF,3,&send_cmd,1,&send_params,sizeof(send_params),PARITY);
 
 	uint8_t *send_data;
@@ -129,7 +141,9 @@ void jetsonSerial::Send_TriggerVoice(int flag)
 	{
 		UART0_Send(fd,(char*)send_data,send_length);
 		IM_FreePacketFromTransmitter(transceiver);
+
 	}
+LOGG("OUT_voice!!!");
 }
 /*****************************************************************
 

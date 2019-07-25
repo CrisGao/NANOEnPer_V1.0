@@ -13,21 +13,17 @@
 #include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/highgui/highgui.hpp>
 
-typedef std::pair<string, float> Prediction;
 
-void *WriteVideo_Speed(void *ptr);
+
+typedef std::pair<string, float> Prediction;
 
 void *Classify_Work(void *ptr);
 
-Prediction GetPreScore_Max(cv::Mat Input_img);
+//Prediction GetPreScore_Max(cv::Mat Input_img);
 
-void cleanup(void *arg);
+bool QueuePrediction(Prediction maxS);
 
-void cleanup1(void *arg);
-
-bool Check_Road_Side(int code = 0);
-
-bool QueuePrediction(cv::Mat input_img);
+//bool VectorPrediction(Prediction maxS);
 
 class VideoImg
 {
@@ -40,24 +36,28 @@ public:
 
     void deleteSources();
 
-    void Init_Classify(string model_file,string trained_file,string mean_file,string label_file);
-
-    void Init_VideoWriteFileStorage(int save_Width,int save_Height);
+    bool ifGetImageFromCamera();
 
     pthread_t startThread_saveVideoSpeed();
 
     pthread_t startThread_classify();
-    
+	
     cv::Mat getImg;
 
     std::string pipeline;
 
+    bool ifSTARTthread = false;
+
 private:
+	
+  
+
     pthread_t VideoImg_thread_id;
 
     pthread_t Classify_thread_id;
 
-    cv::VideoCapture *cap;
+   // cv::VideoCapture *cap;
+     cv::VideoCapture cap;
 
     std::string gstreamer_pipeline(int capture_width, int capture_height, int display_width, int display_height, int framerate, int flip_method)
     {

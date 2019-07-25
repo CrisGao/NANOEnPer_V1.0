@@ -8,6 +8,18 @@
 #include <stdio.h>
 #include <string>
 
+
+#define filename(x) strrchr(x,'/')
+
+#define __DEBUG__ 1
+#if __DEBUG__ 
+#define DEBUG(format,...) printf("[File:" __FILE__ ",LINE:%03d]" format "\n", __LINE__, ##__VA_ARGS__)
+#define LOGG(s) printf("[%s,%d] %s\n",filename(__FILE__),__LINE__,s)
+#else
+#define DEBUG(format,...)
+#define LOGG(s) NULL
+#endif
+
 std::string currentTimeStr = "0";
 int record_nums = 0;
 
