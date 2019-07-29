@@ -32,24 +32,28 @@ void signal_crash_handler(int sig);
 
 pthread_t uart_id, videoImg_id, Classify_id;
 
+bool ifExit = false;
+
 int main()
 {
 
 	//pthread_t uart_id, videoImg_id, Classify_id;
 
-	
 	#if 1
 	std::cout << "---------- Init UART ----------" << std::endl;
 	JetsonUart = jetsonSerial::getInstance();
 
 	char *OpenFile = "/dev/ttyTHS1";
-	JetsonUart->Transceriver_UART_init(OpenFile, 9600, 0, 8, 1, 'N');  //configurate the UART
+	if(!JetsonUart->Transceriver_UART_init(OpenFile, 9600, 0, 8, 1, 'N'))  //configurate the UART
+	return -1;
 
 	std::cout << "---------- Start Get data through UART ----------" << std::endl;
 	uart_id = JetsonUart->startThread();
+	#endif
 	
-	
-
+	JetsonUart->Send_TriggerVoice(1);//Running the program will voice
+	sleep(1);
+	JetsonUart->Send_TriggerVoice(0);
 	
 	std::cout << "---------- InitCamera ----------" << std::endl;
 	JetsonVideo = new VideoImg();
@@ -58,30 +62,24 @@ int main()
 		LOGG("CANNOT INIT CAMERA");
 		return -1;
 	}
-#endif
-#if 0
-	std::cout << "---------- Loading model sysfile ----------" << std::endl;
-	string model_file = "../data/deploy.prototxt";
-	string trained_file = "../data/3caffe_train_iter_600000.caffemodel";
-	string mean_file = "../data/mean.binaryproto";
-	string label_file = "../data/label.txt";
-	JetsonVideo->Init_Classify(model_file,trained_file,mean_file,label_file);
-#endif
 
-#if 1
+
+
 	atexit(server_on_exit);
 	signal(SIGINT,signal_exit_handler);  //Response the "kill the process"
 	signal(SIGTERM,signal_exit_handler); //Response the "Ctrl+C end foreground process"
 	
-	
+/*
 	//non normal exit
 	signal(SIGABRT,signal_crash_handler);//use aboart to exit
 	signal(SIGSEGV,signal_crash_handler);//non illegal access memory
 	signal(SIGBUS,signal_crash_handler);//bus error
-#endif
+
+*/
+#if 0
 std::cout << "---------- Start Prediction ----------" << std::endl;
 		Classify_id = JetsonVideo->startThread_classify();
-
+#endif
 	std::cout << "---------- START for Work ----------" << std::endl;
 	while (1)
 	{
@@ -91,18 +89,11 @@ std::cout << "---------- Start Prediction ----------" << std::endl;
 			break;
 		}
 		#endif
-		#if 0
-		if(JetsonVideo->ifGetImageFromCamera())	
+		if(JetsonVideo->ifGetImageFromCamera())
 		{
-		//std::cout<<"--------------Start VideoSpeed-----------"<<std::endl;
-		//videoImg_id = JetsonVideo->startThread_saveVideoSpeed();
-
-		std::cout << "---------- Start Prediction ----------" << std::endl;
-		Classify_id = JetsonVideo->startThread_classify();
-		
+			std::cout << "---------- Start Prediction ----------" << std::endl;
+			Classify_id = JetsonVideo->startThread_classify();
 		}
-		#endif
-		
    		if(cv::waitKey(30)>0)
 		break;
 	}
@@ -114,6 +105,7 @@ std::cout << "---------- Start Prediction ----------" << std::endl;
 
 void server_on_exit(void)
 {
+
 	pthread_cancel(videoImg_id);
 	pthread_cancel(Classify_id);
 	pthread_cancel(uart_id);
@@ -128,7 +120,7 @@ void server_on_exit(void)
 
 void signal_exit_handler(int sig)
 {
-	//JetsonVideo->deleteSources();
+	
 	exit(0);
 }
 

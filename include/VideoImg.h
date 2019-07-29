@@ -56,8 +56,8 @@ private:
 
     pthread_t Classify_thread_id;
 
-   // cv::VideoCapture *cap;
-     cv::VideoCapture cap;
+    cv::VideoCapture *cap;
+    // cv::VideoCapture cap;
 
     std::string gstreamer_pipeline(int capture_width, int capture_height, int display_width, int display_height, int framerate, int flip_method)
     {

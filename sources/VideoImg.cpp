@@ -43,8 +43,6 @@ cv::VideoWriter writer;
 int nums = 0;
 
 /****************/
-int num1 = 0;
-int num2 = 0;
 bool ifshow = false;
 bool ifClone = true;
 
@@ -55,7 +53,7 @@ VideoImg::VideoImg()
 
 VideoImg::~VideoImg()
 {
-	cap.release();
+	cap->release();
 	pthread_mutex_destroy(&Img_mutex);
 	pthread_exit(NULL);
 	
@@ -68,11 +66,11 @@ bool VideoImg::InitCamera(int capture_width, int capture_height, int display_wid
 
 	pipeline = gstreamer_pipeline(capture_width, capture_height, display_width, display_height, framerate, flip_method);
 	
-	//cap = new cv::VideoCapture(pipeline, cv::CAP_GSTREAMER);
+	cap = new cv::VideoCapture(pipeline, cv::CAP_GSTREAMER);
 	
-	cap.open("test2.avi");
+	//cap.open("/home/leon/NANOEnPer_V1.0/build/test2.avi");
 
-	if (!cap.isOpened())
+	if (!cap->isOpened())
 	{
 
 		std::cout << "Failed to open camera." << std::endl;
@@ -87,28 +85,32 @@ bool VideoImg::startCamera()
 {
 	
 	//pthread_mutex_lock(&Img_mutex);
-	if (!cap.read(getImg))
+	if (!cap->read(getImg))
 	{
 		std::cout << "Capture read error" << std::endl;
-		DEBUG("The classfiy nums is %d,the total frame is %d",num2,num1);
+		return false;
 	}
+	
+//cv::imshow("CSI",getImg);
+#if 1
+
 	if(ifClone)
 	{
 	ifClone =false;
 	img = getImg.clone();
-	num2++;
+
 	}
 
-#if 1
+
 	if(ifshow)
 	{
 	cv::putText(getImg,"ROADWAY!!!!",cv::Point(50,60),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(0,0,255),4,8);
 	}
-	cv::imshow("CSI",getImg);
-	//pthread_mutex_unlock(&Img_mutex);
 #endif
-	num1++;
+	//pthread_mutex_unlock(&Img_mutex);
+
 	return true;
+
 }
 
 bool VideoImg::ifGetImageFromCamera()
@@ -155,17 +157,17 @@ void *Classify_Work(void *ptr)
 	/****init classify********/
 #if 1
 	std::cout << "---------- Loading model sysfile ----------" << std::endl;
-	string model_file = "../data/deploy.prototxt";
-	string trained_file = "../data/3caffe_train_iter_600000.caffemodel";
-	string mean_file = "../data/mean.binaryproto";
-	string label_file = "../data/label.txt";
+	string model_file = "/home/leon/NANOEnPer_V1.0/data/deploy.prototxt";
+	string trained_file = "/home/leon/NANOEnPer_V1.0/data/3caffe_train_iter_600000.caffemodel";
+	string mean_file = "/home/leon/NANOEnPer_V1.0/data/mean.binaryproto";
+	string label_file = "/home/leon/NANOEnPer_V1.0/data/label.txt";
 	Classifier newClassf = Classifier(model_file, trained_file, mean_file, label_file); 
+	LOGG("OUT init classfiy !!");
 #endif
 	/********initivate the uart class************/
 	jetsonSerial *JetsonUartInClassify = jetsonSerial::getInstance();
 	/*******************************************/
-	
-	//cv::Mat Input_image = cv::imread("test.jpg",1);
+
 	Prediction maxS ;
 	while (1)
 	{
@@ -174,7 +176,6 @@ void *Classify_Work(void *ptr)
 		continue;
 		cv::Mat Input_image;
 
-		
 		//pthread_cleanup_push(cleanup1, NULL);
 		//pthread_mutex_lock(&Img_mutex);
 		Input_image = img;
@@ -184,16 +185,16 @@ void *Classify_Work(void *ptr)
 		
 
 
-	clock_t startTime,endTime;
+	//clock_t startTime,endTime;
 
 
 	CHECK(!Input_image.empty()) << "Unabel to decode image" << std::endl;
 
-startTime = clock();
+	//startTime = clock();
 
 	std::vector<Prediction> predictions = newClassf.Classify(Input_image);
-endTime = clock();
-std::cout<<"The run time is :"<<(double)(endTime-startTime)/CLOCKS_PER_SEC<<"s"<<std::endl;
+	//endTime = clock();
+
 	vector<double> Pscore;
 
 	for (size_t i = 0; i < predictions.size(); ++i)
@@ -213,14 +214,11 @@ std::cout<<"The run time is :"<<(double)(endTime-startTime)/CLOCKS_PER_SEC<<"s"<
 			maxS = PreS;
 		}
 	}
-
+std::cout << std::fixed << std::setprecision(4) << maxS.second << " - \"" << maxS.first << "\"" << std::endl;
 #if 1
-		//if (QueuePrediction(maxS))
-		if(true)
+		if (QueuePrediction(maxS))
 		{
-		//DEBUG("WARNING!!!!!!!!!!!!!!!!!");
-	
-		
+
 			JetsonUartInClassify->Send_TriggerVoice(1);
 			
 			ifshow = true;
@@ -229,7 +227,7 @@ std::cout<<"The run time is :"<<(double)(endTime-startTime)/CLOCKS_PER_SEC<<"s"<
 		else
 		{
 			JetsonUartInClassify->Send_TriggerVoice(0);
-			//LOGG("the nums of Queue is not enough or 20 frames less than 10 roadway");
+
 			ifshow = false;
 
 		}
@@ -242,57 +240,9 @@ std::cout<<"The run time is :"<<(double)(endTime-startTime)/CLOCKS_PER_SEC<<"s"<
 	
 }
 
-/*****
-*the voting rule is that if there are more than 10,will output 1,which is the trigger alarm signal
-*return 0 express 20 frames had more than 10 frames predict is roadway,so need to trigger alarm
-*return 1 express 20 frames had less than 10 frames predict is roadway,didn't need to trigger alarm
-*return 2 express the vector hadn't enough frames,need 20 frames to vote
-*****/
-#if 0
-bool VectorPrediction(Prediction maxS)
-{
-LOGG("had in PRE!!!");
-	int Flags;
-	if (maxS.first.compare("0 RoadWay") == 0)
-	{
-		Flags = 1;	//if roadway +1
-		
-	}
-	else
-	Flags = 0;
-
-	vec_score.push_back(Flags);
-DEBUG("the vote is %d",vec_score.size());
-	if(vec_score.size() == 20)
-	{
-		std::vector<int>::iterator it;
-		int vote =0;
-		LOGG("Second in PRE!!!");
-		for(it =vec_score.begin();it !=vec_score.end();it++ )
-			vote += *it ;
-		
-		if(vote > 10)
-		{
-			trigger = true;//trigger
-		}
-		else
-			trigger = false;//non-trigger
-		
-		vec_score.clear();
-	}
-	else
-	trigger = false;
-
-	return trigger;
-	
-}
-#endif 
+ 
 bool QueuePrediction(Prediction maxS)
 {
-
-	//Prediction maxS = GetPreScore_Max(input_img);
-
-	//std::cout << std::fixed << std::setprecision(4) << maxS.second << " - \"" << maxS.first << "\"" << std::endl;
 
 	if (maxS.first.compare("0 RoadWay") == 0)
 	{
@@ -306,7 +256,7 @@ bool QueuePrediction(Prediction maxS)
 
 	if( que_score.size() == 20)
 	{
-		DEBUG("the votes is %d",votes);
+		//DEBUG("the votes is %d",votes);
 		if(votes > 10)
 		{
 			trigger = true;//trigger
@@ -318,89 +268,13 @@ bool QueuePrediction(Prediction maxS)
 		for(int i =0;i<20;i++)
 		que_score.pop();
 		votes = 0;
-		//if(que_score.empty())
-		//LOGG("CLEARING!!!");
-	}
-	
-	return trigger;
-	
-}
-#if 0
-bool QueuePrediction1(Prediction maxS)
-{
-
-	//Prediction maxS = GetPreScore_Max(input_img);
-
-	//std::cout << std::fixed << std::setprecision(4) << maxS.second << " - \"" << maxS.first << "\"" << std::endl;
-
-	if (maxS.first.compare("0 RoadWay") == 0)
-	{
-		Flags = 1;	//if roadway +1
-		votes ++;
-	}
-	else
-	Flags = 0;
-
-	que_score.push(Flags);
-
-	if( que_score.size() == 20)
-	{
 		
-		if(votes > 10)
-		{
-			trigger = true;//trigger
-		}
-		else
-			trigger = false;//non-trigger
-		
-		if(que_score.front() == 1)
-		{
-			votes -=1;
-		}
-
-		que_score.pop();
 	}
 	
 	return trigger;
 	
 }
 
-
-Prediction GetPreScore_Max(cv::Mat Input_img)
-{
-
-clock_t startTime,endTime;
-
-	cv::Mat Input_image = Input_img;
-
-	CHECK(!Input_image.empty()) << "Unabel to decode image" << std::endl;
-startTime = clock();
-
-	std::vector<Prediction> predictions = newClassf->Classify(Input_image);
-endTime = clock();
-std::cout<<"The run time is :"<<(double)(endTime-startTime)/CLOCKS_PER_SEC<<"s"<<std::endl;
-	vector<double> Pscore;
-
-	for (size_t i = 0; i < predictions.size(); ++i)
-	{
-		Prediction p = predictions[i];
-		Pscore.push_back(p.second);
-	}
-
-	auto PreScore = max_element(Pscore.begin(), Pscore.end());
-
-	for (size_t i = 0; i < predictions.size(); ++i)
-	{
-		Prediction PreS = predictions[i];
-		if (*PreScore == PreS.second)
-		{	
-
-			return PreS;
-		}
-	}
-}
-
-#endif
 void VideoImg::deleteSources()
 {
 

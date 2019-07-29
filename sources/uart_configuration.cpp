@@ -13,6 +13,7 @@
 #define LOGG(s) NULL
 #endif
 
+//int n=0;
 
 int8_t jetsonSerial::transceiver =0;
 
@@ -50,7 +51,7 @@ pthread_t jetsonSerial::startThread()
        
       
 }
-void jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,int databits,int stopbits,int parity)
+bool jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,int databits,int stopbits,int parity)
 {
 
        transceiver = IM_CreateTransceiverDynamic(50, 0, 50, 0); //创建接收器
@@ -68,8 +69,14 @@ void jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,in
        {
               err = UART0_Init( fd, 9600, 0, 8, 1, 'N'); 
               printf("Set port exactly!\n");
+		n++;
+		if(n==10)
+		break;
        }while(FALSE == err || FALSE == fd);
-       
+       if(n==10)
+	return false;
+	else 
+	return true;
 
 }
 
@@ -143,7 +150,7 @@ void jetsonSerial::Send_TriggerVoice(int flag)
 		IM_FreePacketFromTransmitter(transceiver);
 
 	}
-LOGG("OUT_voice!!!");
+
 }
 /*****************************************************************
 
@@ -159,7 +166,7 @@ LOGG("OUT_voice!!!");
 int jetsonSerial::UART0_Open(int fd,char* port)
 {
    
-         fd = open( port, O_RDWR|O_NOCTTY|O_NDELAY);
+         fd = open( port, O_RDWR|O_NOCTTY|O_NONBLOCK|O_SYNC|O_NDELAY);
          if (FALSE == fd)
                 {
                        perror("Can't Open Serial Port");
@@ -179,7 +186,7 @@ int jetsonSerial::UART0_Open(int fd,char* port)
       if(0 == isatty(STDIN_FILENO))
                 {
                        printf("standard input is not a terminal device\n");
-                  return(FALSE);
+                 // return(FALSE);
                 }
   else
                 {
@@ -312,10 +319,10 @@ int jetsonSerial::UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stop
    
     //设置等待时间和最小接收字符
     options.c_cc[VTIME] = 1; /* 读取一个字符等待1*(1/10)s */  
-    options.c_cc[VMIN] = 1; /* 读取字符的最少个数为1 */
+    options.c_cc[VMIN] = 8; /* 读取字符的最少个数为1 */
    
     //如果发生数据溢出，接收数据，但是不再读取 刷新收到的数据但是不读
-    tcflush(fd,TCIFLUSH);
+    tcflush(fd,TCIOFLUSH);
    
     //激活配置 (将修改后的termios数据设置到串口中）
     if (tcsetattr(fd,TCSANOW,&options) != 0)  

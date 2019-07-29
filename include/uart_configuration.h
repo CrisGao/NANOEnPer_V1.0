@@ -88,7 +88,7 @@ class jetsonSerial
 
        ~jetsonSerial();
 
-       void Transceriver_UART_init(char *port, int speed,int flow_ctrl,int databits,int stopbits,int parity);
+       bool Transceriver_UART_init(char *port, int speed,int flow_ctrl,int databits,int stopbits,int parity);
 
        int UART0_Open(int fd,char* port);
 
@@ -114,6 +114,7 @@ class jetsonSerial
 
        static int fd;//文件描述符
      
+	int n = 0;
 
    private:
 	static 	jetsonSerial* ptr_Instance;
