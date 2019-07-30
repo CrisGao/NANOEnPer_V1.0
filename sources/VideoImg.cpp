@@ -68,7 +68,7 @@ bool VideoImg::InitCamera(int capture_width, int capture_height, int display_wid
 	
 	cap = new cv::VideoCapture(pipeline, cv::CAP_GSTREAMER);
 	
-	//cap.open("/home/leon/NANOEnPer_V1.0/build/test2.avi");
+	//cap.open("/home/leon/NANOEnPer_V1.0/build/test3.mp4");
 
 	if (!cap->isOpened())
 	{
@@ -84,30 +84,30 @@ bool VideoImg::InitCamera(int capture_width, int capture_height, int display_wid
 bool VideoImg::startCamera()
 {
 	
-	//pthread_mutex_lock(&Img_mutex);
+	
 	if (!cap->read(getImg))
 	{
 		std::cout << "Capture read error" << std::endl;
 		return false;
 	}
-	
-//cv::imshow("CSI",getImg);
-#if 1
+
+#if 0
+	if(ifshow)
+	{
+	cv::putText(getImg,"ROADWAY!!!!",cv::Point(50,60),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(0,0,255),4,8);
+	LOGG("ROADWAY!!!");
+	}
+	cv::imshow("CSI",getImg);
+#endif
 
 	if(ifClone)
 	{
 	ifClone =false;
+	pthread_mutex_lock(&Img_mutex);
 	img = getImg.clone();
+	pthread_mutex_unlock(&Img_mutex);
 
 	}
-
-
-	if(ifshow)
-	{
-	cv::putText(getImg,"ROADWAY!!!!",cv::Point(50,60),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(0,0,255),4,8);
-	}
-#endif
-	//pthread_mutex_unlock(&Img_mutex);
 
 	return true;
 
@@ -162,7 +162,7 @@ void *Classify_Work(void *ptr)
 	string mean_file = "/home/leon/NANOEnPer_V1.0/data/mean.binaryproto";
 	string label_file = "/home/leon/NANOEnPer_V1.0/data/label.txt";
 	Classifier newClassf = Classifier(model_file, trained_file, mean_file, label_file); 
-	LOGG("OUT init classfiy !!");
+	LOGG("Finish init classfiy !!");
 #endif
 	/********initivate the uart class************/
 	jetsonSerial *JetsonUartInClassify = jetsonSerial::getInstance();
@@ -177,9 +177,9 @@ void *Classify_Work(void *ptr)
 		cv::Mat Input_image;
 
 		//pthread_cleanup_push(cleanup1, NULL);
-		//pthread_mutex_lock(&Img_mutex);
+		pthread_mutex_lock(&Img_mutex);
 		Input_image = img;
-		//pthread_mutex_unlock(&Img_mutex);
+		pthread_mutex_unlock(&Img_mutex);
 		
 		//pthread_cleanup_pop(0);
 		
@@ -214,7 +214,7 @@ void *Classify_Work(void *ptr)
 			maxS = PreS;
 		}
 	}
-std::cout << std::fixed << std::setprecision(4) << maxS.second << " - \"" << maxS.first << "\"" << std::endl;
+	std::cout << std::fixed << std::setprecision(4) << maxS.second << " - \"" << maxS.first << "\"" << std::endl;
 #if 1
 		if (QueuePrediction(maxS))
 		{

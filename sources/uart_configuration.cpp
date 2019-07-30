@@ -15,11 +15,15 @@
 
 //int n=0;
 
-int8_t jetsonSerial::transceiver =0;
-
-int jetsonSerial::fd =0;
-
 double VehicleSpeed = 0.00;
+
+int8_t jetsonSerial::transceiver_send =0;
+
+int8_t jetsonSerial::transceiver_receiver = 0;
+
+int jetsonSerial::fd_send =0;
+
+int jetsonSerial::fd_receiver =0;
 
 jetsonSerial* jetsonSerial::ptr_Instance = nullptr;
 
@@ -32,12 +36,15 @@ jetsonSerial::~jetsonSerial()
 {
        pthread_exit(NULL);
 
-       UART0_Close(fd);
+       UART0_Close(fd_send);
+
+	UART0_Close(fd_receiver);
 }
 
 pthread_t jetsonSerial::startThread()
 {
 
+	
         if(pthread_create(&uart_thread_id,NULL,CallGet_Speed,NULL))
         {
             std::cout<<"uart_thread create error!"<<std::endl;
@@ -51,9 +58,10 @@ pthread_t jetsonSerial::startThread()
        
       
 }
-bool jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,int databits,int stopbits,int parity)
+bool jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,int databits,int stopbits,int parity,int flag)
 {
-
+	int fd;
+	int8_t transceiver;
        transceiver = IM_CreateTransceiverDynamic(50, 0, 50, 0); //创建接收器
 
        if (!ResetReceiverCipherTable(transceiver, CIPHER_TABLE))
@@ -73,10 +81,28 @@ bool jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,in
 		if(n==10)
 		break;
        }while(FALSE == err || FALSE == fd);
+
        if(n==10)
-	return false;
-	else 
-	return true;
+		return false;
+
+       
+	if(flag == RECEIVER)
+	{
+		fd_receiver = fd;
+		
+		transceiver_receiver = transceiver;
+			
+	}
+	else if(flag == SEND)
+	{
+		fd_send = fd;
+
+		transceiver_send = transceiver;
+	}
+
+		return true;
+
+	
 
 }
 
@@ -84,6 +110,9 @@ void* CallGet_Speed(void *ptr)
 {
 
        jetsonSerial temp;
+
+       uint8_t receiv_buf[100];
+
        while(1)
        {
 	      
@@ -93,13 +122,13 @@ void* CallGet_Speed(void *ptr)
 
               uint32_t received_time;
               
-              uint16_t len = temp.UART0_Recv(temp.fd,temp.receiv_buf,20);
+              uint16_t len = temp.UART0_Recv(temp.fd_receiver,receiv_buf,20);
 
-              if(IM_DataReceive(temp.transceiver, temp.receiv_buf, len, NULL, 0, 20) > 0)
+              if(IM_DataReceive(temp.transceiver_receiver, receiv_buf, len, NULL, 0, 20) > 0)
               {
 
                      //注意必须未防止“死包”堆积，必须用while
-                     while(IM_SpecialGroupGetReceivedPacket(temp.transceiver, 0, &source, &target, &cmd, &p_data,&length, &received_time) > 0)
+                     while(IM_SpecialGroupGetReceivedPacket(temp.transceiver_receiver, 0, &source, &target, &cmd, &p_data,&length, &received_time) > 0)
                      {
                             if(cmd==0x80)//判断指令是否为实时信息反馈
                      {                  
@@ -107,11 +136,13 @@ void* CallGet_Speed(void *ptr)
 
                             VehicleSpeed=(int)temp.GetInfo.speed*0.01;
               
+			    std::cout<<"current Speed is:"<<VehicleSpeed<<std::endl;
+
                             usleep(100000);
                            
                      }
                    
-                            IM_FreeReceivedPacket(temp.transceiver);
+                            IM_FreeReceivedPacket(temp.transceiver_receiver);
        
                      }
                     
@@ -125,29 +156,35 @@ void* CallGet_Speed(void *ptr)
 void jetsonSerial::Send_TriggerVoice(int flag)
 {
 	uint8_t send_cmd = 0x11;
+
 	uint8_t send_params; 
 
 	if(flag ==1)
 	{
-	send_params = 0x01; //open the voice
-	LOGG("OpenVoice!!!");
+		send_params = 0x01; //open the voice
+
+		LOGG("OpenVoice!!!");
 	}
+
 	else if(flag == 0)
 	{
-	send_params = 0x00; //close the voice
-	LOGG("CloseVoice!!!");
+		send_params = 0x00; //close the voice
+
+		LOGG("CloseVoice!!!");
 	}
 	
 	
-	IM_PackDataToTransmitter(transceiver,rand()%256,0XFFFFFFFF,3,&send_cmd,1,&send_params,sizeof(send_params),PARITY);
+	IM_PackDataToTransmitter(transceiver_send,rand()%256,0XFFFFFFFF,3,&send_cmd,1,&send_params,sizeof(send_params),PARITY);
 
 	uint8_t *send_data;
+
 	uint16_t send_length;
 
-	if(IM_GetPacketFromTransmitter(transceiver,&send_data,&send_length,0)>0)
+	if(IM_GetPacketFromTransmitter(transceiver_send,&send_data,&send_length,0)>0)
 	{
-		UART0_Send(fd,(char*)send_data,send_length);
-		IM_FreePacketFromTransmitter(transceiver);
+		UART0_Send(fd_send,(char*)send_data,send_length);
+
+		IM_FreePacketFromTransmitter(transceiver_send);
 
 	}
 

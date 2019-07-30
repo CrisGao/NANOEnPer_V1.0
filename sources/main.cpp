@@ -27,9 +27,6 @@ void server_on_exit(void);
 
 void signal_exit_handler(int sig);
 
-void signal_crash_handler(int sig);
-
-
 pthread_t uart_id, videoImg_id, Classify_id;
 
 bool ifExit = false;
@@ -37,20 +34,29 @@ bool ifExit = false;
 int main()
 {
 
-	//pthread_t uart_id, videoImg_id, Classify_id;
-
-	#if 1
 	std::cout << "---------- Init UART ----------" << std::endl;
 	JetsonUart = jetsonSerial::getInstance();
 
-	char *OpenFile = "/dev/ttyTHS1";
-	if(!JetsonUart->Transceriver_UART_init(OpenFile, 9600, 0, 8, 1, 'N'))  //configurate the UART
-	return -1;
+	char *OpenFile_receive = "/dev/ttyTHS1";
+	char *OpenFile_send = "/dev/ttyS0";
+	
+	DEBUG("RECEIVER is %d",RECEIVER);
+	if(!JetsonUart->Transceriver_UART_init(OpenFile_receive, 9600, 0, 8, 1, 'N',RECEIVER))  //configurate the Receive UART
+	{
+		std::cout<<"Cannot Open the ttyTHS1"<<std::endl;
+		return -1;
+	}
+	
+	DEBUG("SEND is %d",SEND);
+	if(!JetsonUart->Transceriver_UART_init(OpenFile_send, 9600, 0, 8, 1, 'N',SEND))  //configurate the Send UART
+	{
+		std::cout<<"Cannot Open the ttyS0"<<std::endl;
+		return -1;
+	}
 
 	std::cout << "---------- Start Get data through UART ----------" << std::endl;
 	uart_id = JetsonUart->startThread();
-	#endif
-	
+
 	JetsonUart->Send_TriggerVoice(1);//Running the program will voice
 	sleep(1);
 	JetsonUart->Send_TriggerVoice(0);
@@ -76,10 +82,7 @@ int main()
 	signal(SIGBUS,signal_crash_handler);//bus error
 
 */
-#if 0
-std::cout << "---------- Start Prediction ----------" << std::endl;
-		Classify_id = JetsonVideo->startThread_classify();
-#endif
+
 	std::cout << "---------- START for Work ----------" << std::endl;
 	while (1)
 	{
@@ -122,16 +125,5 @@ void signal_exit_handler(int sig)
 {
 	
 	exit(0);
-}
-
-void signal_crash_handler(int sig)
-{
-	JetsonVideo->deleteSources ();
-        delete JetsonVideo;
-	delete JetsonUart;
-	JetsonVideo = NULL;
-	JetsonUart  = NULL;
-	LOGG("UNNORMA EXIT");
-	exit(-1);
 }
 

@@ -72,6 +72,12 @@ typedef unsigned char uint8_t;
 
 void*  CallGet_Speed(void *ptr);
 
+enum ChoseMode
+{
+	SEND = 0,
+	RECEIVER = 1
+};
+
 class jetsonSerial
 {
    public:
@@ -88,7 +94,7 @@ class jetsonSerial
 
        ~jetsonSerial();
 
-       bool Transceriver_UART_init(char *port, int speed,int flow_ctrl,int databits,int stopbits,int parity);
+       bool Transceriver_UART_init(char *port, int speed,int flow_ctrl,int databits,int stopbits,int parity,int flag);
 
        int UART0_Open(int fd,char* port);
 
@@ -106,13 +112,13 @@ class jetsonSerial
 
        void Send_TriggerVoice(int flag);  //use uart to trigger the vehicle voice and lighting
 
-       uint8_t receiv_buf[100];
+      // uint8_t receiv_buf[100];
 
        CAR_INFO GetInfo;
 
-       static int8_t transceiver;
+       static int8_t transceiver_send,transceiver_receiver;
 
-       static int fd;//文件描述符
+       static int fd_send,fd_receiver;//文件描述符
      
 	int n = 0;
 
