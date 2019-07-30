@@ -20,12 +20,6 @@ cv::Mat img;
 
 
 pthread_mutex_t Img_mutex;
-
-
-//Classifier* newClassf;
-
-/******************/
-//std::vector<int> vec_score(20);
 	
 std::queue<float> que_score;
 
@@ -67,8 +61,6 @@ bool VideoImg::InitCamera(int capture_width, int capture_height, int display_wid
 	pipeline = gstreamer_pipeline(capture_width, capture_height, display_width, display_height, framerate, flip_method);
 	
 	cap = new cv::VideoCapture(pipeline, cv::CAP_GSTREAMER);
-	
-	//cap.open("/home/leon/NANOEnPer_V1.0/build/test3.mp4");
 
 	if (!cap->isOpened())
 	{
@@ -76,8 +68,7 @@ bool VideoImg::InitCamera(int capture_width, int capture_height, int display_wid
 		std::cout << "Failed to open camera." << std::endl;
 		return false;
 	}
-	//cv::namedWindow("CIS" , cv::WINDOW_NORMAL);
-	//cv::setWindowProperty("CSI" , cv::WND_PROP_FULLSCREEN,cv::WINDOW_FULLSCREEN);
+
 	return true;
 }
 
@@ -91,14 +82,6 @@ bool VideoImg::startCamera()
 		return false;
 	}
 
-#if 0
-	if(ifshow)
-	{
-	cv::putText(getImg,"ROADWAY!!!!",cv::Point(50,60),cv::FONT_HERSHEY_SIMPLEX,1,cv::Scalar(0,0,255),4,8);
-	LOGG("ROADWAY!!!");
-	}
-	cv::imshow("CSI",getImg);
-#endif
 
 	if(ifClone)
 	{
@@ -182,18 +165,10 @@ void *Classify_Work(void *ptr)
 		pthread_mutex_unlock(&Img_mutex);
 		
 		//pthread_cleanup_pop(0);
-		
-
-
-	//clock_t startTime,endTime;
-
 
 	CHECK(!Input_image.empty()) << "Unabel to decode image" << std::endl;
 
-	//startTime = clock();
-
 	std::vector<Prediction> predictions = newClassf.Classify(Input_image);
-	//endTime = clock();
 
 	vector<double> Pscore;
 
@@ -234,7 +209,6 @@ void *Classify_Work(void *ptr)
 #endif
 		
 		ifClone =true;
-		//usleep(50000);
 		
 	}
 	
@@ -256,7 +230,6 @@ bool QueuePrediction(Prediction maxS)
 
 	if( que_score.size() == 20)
 	{
-		//DEBUG("the votes is %d",votes);
 		if(votes > 10)
 		{
 			trigger = true;//trigger

@@ -40,14 +40,14 @@ int main()
 	char *OpenFile_receive = "/dev/ttyTHS1";
 	char *OpenFile_send = "/dev/ttyS0";
 	
-	DEBUG("RECEIVER is %d",RECEIVER);
+	
 	if(!JetsonUart->Transceriver_UART_init(OpenFile_receive, 9600, 0, 8, 1, 'N',RECEIVER))  //configurate the Receive UART
 	{
 		std::cout<<"Cannot Open the ttyTHS1"<<std::endl;
 		return -1;
 	}
 	
-	DEBUG("SEND is %d",SEND);
+
 	if(!JetsonUart->Transceriver_UART_init(OpenFile_send, 9600, 0, 8, 1, 'N',SEND))  //configurate the Send UART
 	{
 		std::cout<<"Cannot Open the ttyS0"<<std::endl;
@@ -57,9 +57,6 @@ int main()
 	std::cout << "---------- Start Get data through UART ----------" << std::endl;
 	uart_id = JetsonUart->startThread();
 
-	JetsonUart->Send_TriggerVoice(1);//Running the program will voice
-	sleep(1);
-	JetsonUart->Send_TriggerVoice(0);
 	
 	std::cout << "---------- InitCamera ----------" << std::endl;
 	JetsonVideo = new VideoImg();
@@ -69,21 +66,16 @@ int main()
 		return -1;
 	}
 
-
+	std::cout << "---------- START for Work ----------" << std::endl;
+	JetsonUart->Send_TriggerVoice(1);//Running the program will voice
+	sleep(1);
+	JetsonUart->Send_TriggerVoice(0);
 
 	atexit(server_on_exit);
 	signal(SIGINT,signal_exit_handler);  //Response the "kill the process"
 	signal(SIGTERM,signal_exit_handler); //Response the "Ctrl+C end foreground process"
-	
-/*
-	//non normal exit
-	signal(SIGABRT,signal_crash_handler);//use aboart to exit
-	signal(SIGSEGV,signal_crash_handler);//non illegal access memory
-	signal(SIGBUS,signal_crash_handler);//bus error
 
-*/
 
-	std::cout << "---------- START for Work ----------" << std::endl;
 	while (1)
 	{
 		#if 1
