@@ -33,7 +33,7 @@ bool ifExit = false;
 
 int main()
 {
-
+	#if 1
 	std::cout << "---------- Init UART ----------" << std::endl;
 	JetsonUart = jetsonSerial::getInstance();
 
@@ -57,7 +57,7 @@ int main()
 	std::cout << "---------- Start Get data through UART ----------" << std::endl;
 	uart_id = JetsonUart->startThread();
 
-	
+	#endif
 	std::cout << "---------- InitCamera ----------" << std::endl;
 	JetsonVideo = new VideoImg();
 	if (!JetsonVideo->InitCamera(3280, 2464, 1280, 720, 20, 2))  // configurate the CSI camera stream

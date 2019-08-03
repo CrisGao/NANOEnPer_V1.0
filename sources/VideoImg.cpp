@@ -5,6 +5,7 @@
 #include <unistd.h> /*Unix 标准函数定义*/
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <sys/time.h>
 #include <string>
 
 #include <queue>
@@ -27,11 +28,7 @@ int Flags ;
 int votes = 0;
 bool trigger = false;
 
-/******************/
 
-int Frame_i = 0;
-cv::FileStorage fs;
-cv::VideoWriter writer;
 /*****************/
 
 int nums = 0;
@@ -61,7 +58,7 @@ bool VideoImg::InitCamera(int capture_width, int capture_height, int display_wid
 	pipeline = gstreamer_pipeline(capture_width, capture_height, display_width, display_height, framerate, flip_method);
 	
 	cap = new cv::VideoCapture(pipeline, cv::CAP_GSTREAMER);
-
+	
 	if (!cap->isOpened())
 	{
 
@@ -152,6 +149,10 @@ void *Classify_Work(void *ptr)
 	/*******************************************/
 
 	Prediction maxS ;
+	struct timeval tv;
+	bool isFirstWarning = true;
+	int first_time, next_time, loop_time;
+
 	while (1)
 	{
 		
@@ -191,10 +192,26 @@ void *Classify_Work(void *ptr)
 	}
 	std::cout << std::fixed << std::setprecision(4) << maxS.second << " - \"" << maxS.first << "\"" << std::endl;
 #if 1
-		if (QueuePrediction(maxS))
+		if (!QueuePrediction(maxS))
 		{
+			gettimeofday(&tv, NULL);
+			next_time = tv.tv_sec;
+			loop_time = next_time - first_time;
 
+			if(isFirstWarning)
+			{
 			JetsonUartInClassify->Send_TriggerVoice(1);
+			gettimeofday(&tv, NULL);
+			first_time = tv.tv_sec;
+			isFirstWarning = false;
+
+			}			
+			else if((!isFirstWarning) && (loop_time%20 == 0))
+			{
+			JetsonUartInClassify->Send_TriggerVoice(1);
+			//isFirstWarning = true;
+			}
+			
 			
 			ifshow = true;
 			
@@ -202,7 +219,7 @@ void *Classify_Work(void *ptr)
 		else
 		{
 			JetsonUartInClassify->Send_TriggerVoice(0);
-
+			isFirstWarning = true;
 			ifshow = false;
 
 		}
