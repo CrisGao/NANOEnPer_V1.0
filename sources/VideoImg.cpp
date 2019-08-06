@@ -192,7 +192,7 @@ void *Classify_Work(void *ptr)
 	}
 	std::cout << std::fixed << std::setprecision(4) << maxS.second << " - \"" << maxS.first << "\"" << std::endl;
 #if 1
-		if (!QueuePrediction(maxS))
+		if (QueuePrediction(maxS))
 		{
 			gettimeofday(&tv, NULL);
 			next_time = tv.tv_sec;
