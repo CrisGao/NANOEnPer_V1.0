@@ -1,0 +1,11 @@
+cmake_minimum_required(VERSION 2.8)
+
+project(Captute_Video)
+set(OpenCV_DIR /usr/share/OpenCV)
+set(CMAKE_CXX_STANDARD 11)
+find_package(OpenCV REQUIRED)
+include_directories(./include ${OpenCV_INCLUDE_DIRS})
+aux_source_directory(./sources DIR_SRCS)
+#add_executable(simple_camera simple_camera.cpp)
+add_executable(Captute_Video ${DIR_SRCS})
+target_link_libraries(Captute_Video ${OpenCV_LIBS})

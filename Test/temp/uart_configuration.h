@@ -22,8 +22,6 @@
 #include <unistd.h>
 #include <cstdlib>
 
-#include <glog/logging.h>
-
 #define FALSE -1
 #define TRUE 0
 
@@ -112,7 +110,7 @@ class jetsonSerial
 
        pthread_t startThread();
 
-       void Send_TriggerVoice(int flag, int voice = 100);  //use uart to trigger the vehicle voice and lighting
+       void Send_TriggerVoice(int flag);  //use uart to trigger the vehicle voice and lighting
 
       // uint8_t receiv_buf[100];
 

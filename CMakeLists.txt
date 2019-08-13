@@ -19,6 +19,7 @@ else()
 endif() 
 #如上为新加的
 set(CMAKE_CXX_STANDARD 11)
+set(GLOG_LIB glog)
 
 set(CMAKE_CXX_STANDARD_REQUIRED true)
 set(OpenCV_DIR /usr/local/share/OpenCV)
@@ -27,6 +28,7 @@ include_directories(./include
 		     /home/leon/CAFFE/caffe/include #caffe路径 
 		     /usr/local/cuda/include
 		     /home/leon/CAFFE/caffe/build/src
+		     ${GLOG_LIB}
 		     ${OpenCV_INCLUDE_DIRS})
 
 aux_source_directory(./sources DIR_SRCS)

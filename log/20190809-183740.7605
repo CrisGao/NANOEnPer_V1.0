@@ -1,0 +1,38 @@
+Log file created at: 2019/08/09 18:37:40
+Running on machine: leon-Inmotion
+Log line format: [IWEF]mmdd hh:mm:ss.uuuuuu threadid file:line] msg
+I0809 18:37:40.330881  7605 main.cpp:36] ---------- Init UART ----------
+I0809 18:37:40.334605  7605 uart_configuration.cpp:57] had success load tabel
+I0809 18:37:40.337200  7605 uart_configuration.cpp:210] fcntl=0
+I0809 18:37:40.337237  7605 uart_configuration.cpp:222] isatty success!
+I0809 18:37:40.337256  7605 uart_configuration.cpp:225] fd->open=4
+I0809 18:37:40.337291  7605 uart_configuration.cpp:67] Set port exactly!
+I0809 18:37:40.337313  7605 uart_configuration.cpp:57] had success load tabel
+I0809 18:37:40.337347  7605 uart_configuration.cpp:210] fcntl=0
+I0809 18:37:40.337369  7605 uart_configuration.cpp:222] isatty success!
+I0809 18:37:40.337388  7605 uart_configuration.cpp:225] fd->open=5
+I0809 18:37:40.337438  7605 uart_configuration.cpp:67] Set port exactly!
+I0809 18:37:40.337460  7605 main.cpp:56] ---------- Start Get data through UART ----------
+I0809 18:37:40.338019  7605 uart_configuration.cpp:43] uart_thread create success!
+I0809 18:37:40.338737  7605 main.cpp:60] ---------- InitCamera ----------
+I0809 18:37:40.630388  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:40.835181  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:41.039050  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:41.243000  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:41.446732  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:41.651046  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:41.854743  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:42.059013  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:42.815313  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:43.019536  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:43.223069  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:43.427337  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:43.807029  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:44.011080  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:44.214660  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:44.419247  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:44.623008  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:44.827031  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:45.199043  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:45.403053  7607 uart_configuration.cpp:127] current Speed is:0
+I0809 18:37:45.607211  7607 uart_configuration.cpp:127] current Speed is:0

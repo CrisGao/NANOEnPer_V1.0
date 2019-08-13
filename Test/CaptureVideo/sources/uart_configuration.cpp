@@ -90,28 +90,26 @@ bool jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,in
 }
 
 
-void jetsonSerial::Send_TriggerVoice(int flag)
+void jetsonSerial::Send_TriggerVoice(int flag,int voice)
 {
 	uint8_t send_cmd = 0x11;
 
-	uint8_t send_params; 
-
+	uint8_t send_params[2]; 
+	
 	if(flag ==1)
 	{
-		send_params = 0x01; //open the voice
-
-		LOGG("OpenVoice!!!");
+		send_params[0] = 0x01; //open the voice 200
+		send_params[1] = (uint8_t)voice;
+		
 	}
 
 	else if(flag == 0)
 	{
-		send_params = 0x00; //close the voice
-
-		LOGG("CloseVoice!!!");
+		send_params[0] = 0x00; //close the voice
+		
 	}
 	
-	
-	IM_PackDataToTransmitter(transceiver_send,rand()%256,0XFFFFFFFF,3,&send_cmd,1,&send_params,sizeof(send_params),PARITY);
+	IM_PackDataToTransmitter(transceiver_send,rand()%256,0XFFFFFFFF,3,&send_cmd,1,send_params,sizeof(send_params),PARITY);
 
 	uint8_t *send_data;
 

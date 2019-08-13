@@ -163,16 +163,16 @@ int main()
 	CheckSpace cs = CheckSpace(topdir);
 	if(cs.GetGB() >=40)
 	{
-	JetsonUart->Send_TriggerVoice(1);
+	JetsonUart->Send_TriggerVoice(1,500);
 	std::cout<<"The computer storge is not enough"<<std::endl;
 	sleep(10);
 	return -1;
 	}
 	
 	std::cout << "---------- START for Work ----------" << std::endl;
-	JetsonUart->Send_TriggerVoice(1);//Running the program will voice
+	JetsonUart->Send_TriggerVoice(1,500);//Running the program will voice
 	sleep(3);
-	JetsonUart->Send_TriggerVoice(0);
+	JetsonUart->Send_TriggerVoice(0,500);
 
 #endif	
 

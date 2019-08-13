@@ -2,6 +2,18 @@
 #include <stdio.h>
 #include <ctime>
 
+#define filename(x) strrchr(x,'/')
+
+#define __DEBUG__ 1
+#if __DEBUG__ 
+#define DEBUG(format,...) printf("[File:" __FILE__ ",LINE:%03d]" format "\n", __LINE__, ##__VA_ARGS__)
+#define LOGG(s) printf("[%s,%d] %s\n",filename(__FILE__),__LINE__,s)
+#else
+#define DEBUG(format,...)
+#define LOGG(s) NULL
+#endif
+
+//int n=0;
 
 double VehicleSpeed = 0.00;
 
@@ -35,12 +47,12 @@ pthread_t jetsonSerial::startThread()
 	
         if(pthread_create(&uart_thread_id,NULL,CallGet_Speed,NULL))
         {
-            LOG(ERROR)<<"uart_thread create error!";
+            std::cout<<"uart_thread create error!"<<std::endl;
             return -1;
         }
         else
         {
-            LOG(INFO)<<"uart_thread create success!";
+            std::cout<<"uart_thread create success!"<<std::endl;
             return uart_thread_id;
         }
        
@@ -54,7 +66,7 @@ bool jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,in
 
        if (!ResetReceiverCipherTable(transceiver, CIPHER_TABLE))
        {
-              LOG(INFO) << "had success load tabel";
+              std::cout << "had success load tabel" << std::endl;
        }
 
        fd = UART0_Open(fd,port);
@@ -64,7 +76,7 @@ bool jetsonSerial::Transceriver_UART_init(char *port, int speed,int flow_ctrl,in
         do
        {
               err = UART0_Init( fd, 9600, 0, 8, 1, 'N'); 
-              LOG(INFO)<< "Set port exactly!";
+              printf("Set port exactly!\n");
 		n++;
 		if(n==10)
 		break;
@@ -124,7 +136,7 @@ void* CallGet_Speed(void *ptr)
 
                             VehicleSpeed=(int)temp.GetInfo.speed*0.01;
               
-			    LOG(INFO)<<"current Speed is:"<<VehicleSpeed;
+			    std::cout<<"current Speed is:"<<VehicleSpeed<<std::endl;
 
                             usleep(100000);
                            
@@ -141,27 +153,28 @@ void* CallGet_Speed(void *ptr)
 	
 }
 
-void jetsonSerial::Send_TriggerVoice(int flag,int voice)
+void jetsonSerial::Send_TriggerVoice(int flag)
 {
 	uint8_t send_cmd = 0x11;
 
-	uint8_t send_params[2]; 
-	
+	uint8_t send_params; 
+
 	if(flag ==1)
 	{
-		send_params[0] = 0x01; //open the voice 200
-		send_params[1] = (uint8_t)voice;
-		LOG(INFO)<<"Roadway:OpenVoice!!!";
+		send_params = 0x01; //open the voice
+
+		LOGG("OpenVoice!!!");
 	}
 
 	else if(flag == 0)
 	{
-		send_params[0] = 0x00; //close the voice
-		LOG(INFO)<<"Sideway:CloseVoice!!!";
+		send_params = 0x00; //close the voice
+
+		LOGG("CloseVoice!!!");
 	}
 	
 	
-	IM_PackDataToTransmitter(transceiver_send,rand()%256,0XFFFFFFFF,3,&send_cmd,1,send_params,sizeof(send_params),PARITY);
+	IM_PackDataToTransmitter(transceiver_send,rand()%256,0XFFFFFFFF,3,&send_cmd,1,&send_params,sizeof(send_params),PARITY);
 
 	uint8_t *send_data;
 
@@ -193,36 +206,30 @@ int jetsonSerial::UART0_Open(int fd,char* port)
          fd = open( port, O_RDWR|O_NOCTTY|O_NONBLOCK|O_SYNC|O_NDELAY);
          if (FALSE == fd)
                 {
-                      // perror("Can't Open Serial Port");
-			LOG(ERROR)<<"Can't Open Serial Port";
+                       perror("Can't Open Serial Port");
                        return(FALSE);
                 }
-     	//恢复串口为阻塞状态                               
-     	if(fcntl(fd, F_SETFL, 0) < 0)
+     //恢复串口为阻塞状态                               
+     if(fcntl(fd, F_SETFL, 0) < 0)
                 {
-                      // printf("fcntl failed!\n");
-			LOG(ERROR)<< "fcntl failed!";                   
-			return(FALSE);
+                       printf("fcntl failed!\n");
+                     return(FALSE);
                 }     
          else
                 {
-                 // printf("fcntl=%d\n",fcntl(fd, F_SETFL,0));
-			LOG(INFO) << "fcntl="<<fcntl(fd, F_SETFL,0);
+                  printf("fcntl=%d\n",fcntl(fd, F_SETFL,0));
                 }
       //测试是否为终端设备    
       if(0 == isatty(STDIN_FILENO))
                 {
-                       //printf("standard input is not a terminal device\n");
-			LOG(WARNING)<< "standard input is not a terminal device";
+                       printf("standard input is not a terminal device\n");
                  // return(FALSE);
                 }
- 	 else
+  else
                 {
-                     //printf("isatty success!\n");
-			LOG(INFO)<<"isatty success!";
+                     printf("isatty success!\n");
                 }              
-  //printf("fd->open=%d\n",fd);
-	LOG(INFO)<<"fd->open="<<fd;
+  printf("fd->open=%d\n",fd);
   return fd;
 }
 
@@ -245,8 +252,7 @@ int jetsonSerial::UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stop
     */
     if  ( tcgetattr( fd,&options)  !=  0)
        {
-          //perror("SetupSerial 1");
-	LOG(ERROR)<<"SetupSerial 1";    
+          perror("SetupSerial 1");    
           return(FALSE); 
        }
   
@@ -358,8 +364,7 @@ int jetsonSerial::UART0_Set(int fd,int speed,int flow_ctrl,int databits,int stop
     //激活配置 (将修改后的termios数据设置到串口中）
     if (tcsetattr(fd,TCSANOW,&options) != 0)  
            {
-               //perror("com set error!\n");  
-		LOG(ERROR)<<"com set error!";
+               perror("com set error!\n");  
               return (FALSE); 
            }
     return (TRUE); 
@@ -402,7 +407,7 @@ int jetsonSerial::UART0_Recv(int fd,uint8_t *rcv_buf,int data_len)
        }
     else
        {
-	      LOG(ERROR)<<"Sorry,Cannot receive datas!";
+	      printf("Sorry,Cannot receive datas!");
               return FALSE;
        }     
 }

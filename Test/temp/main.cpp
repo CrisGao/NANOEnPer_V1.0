@@ -4,10 +4,19 @@
 #include <iostream>
 #include <string.h>
 #include <unistd.h> /*Unix 标准函数定义*/
+
 #include <signal.h>
 
+#define filename(x) strrchr(x,'/')
 
-
+#define __DEBUG__ 1
+#if __DEBUG__ 
+#define DEBUG(format,...) printf("[File:" __FILE__ ",LINE:%03d]" format "\n", __LINE__, ##__VA_ARGS__)
+#define LOGG(s) printf("[%s,%d] %s\n",filename(__FILE__),__LINE__,s)
+#else
+#define DEBUG(format,...)
+#define LOGG(s) NULL
+#endif
 
 extern double VehicleSpeed;
 
@@ -22,18 +31,10 @@ pthread_t uart_id, videoImg_id, Classify_id;
 
 bool ifExit = false;
 
-int main(int argc,char* argv[])
+int main()
 {
-	google::InitGoogleLogging(argv[0]);
-	google::SetLogDestination(google::GLOG_INFO,"/home/leon/NANOEnPer_V1.0/log/"); //输出日志目录
-	google::SetStderrLogging(google::GLOG_WARNING);//级别高于WARNINGDE日志才有输出到屏幕，但若设置输出到控制台，该设置无效
-
-	FLAGS_colorlogtostderr = true; //设置日志输出带颜色
-	FLAGS_logbufsecs = 0; //日志实时输出
-	FLAGS_max_log_size = 1024; //日志的最大大小，单位M
-
 	#if 1
-	LOG(INFO) << "---------- Init UART ----------";
+	std::cout << "---------- Init UART ----------" << std::endl;
 	JetsonUart = jetsonSerial::getInstance();
 
 	char *OpenFile_receive = "/dev/ttyTHS1";
@@ -42,31 +43,31 @@ int main(int argc,char* argv[])
 	
 	if(!JetsonUart->Transceriver_UART_init(OpenFile_receive, 9600, 0, 8, 1, 'N',RECEIVER))  //configurate the Receive UART
 	{
-		LOG(ERROR) <<"Cannot Open the ttyTHS1";
+		std::cout<<"Cannot Open the ttyTHS1"<<std::endl;
 		return -1;
 	}
 	
 
 	if(!JetsonUart->Transceriver_UART_init(OpenFile_send, 9600, 0, 8, 1, 'N',SEND))  //configurate the Send UART
 	{
-		LOG(ERROR) <<"Cannot Open the ttyS0";
+		std::cout<<"Cannot Open the ttyS0"<<std::endl;
 		return -1;
 	}
 
-	LOG(INFO) << "---------- Start Get data through UART ----------" ;
+	std::cout << "---------- Start Get data through UART ----------" << std::endl;
 	uart_id = JetsonUart->startThread();
 
 	#endif
-	LOG(INFO) << "---------- InitCamera ----------" ;
+	std::cout << "---------- InitCamera ----------" << std::endl;
 	JetsonVideo = new VideoImg();
 	if (!JetsonVideo->InitCamera(3280, 2464, 1280, 720, 20, 2))  // configurate the CSI camera stream
 	{
-		LOG(ERROR)<< "CANNOT INIT CAMERA";
+		LOGG("CANNOT INIT CAMERA");
 		return -1;
 	}
 
-	LOG(INFO) << "---------- START for Work ----------" ;
-	JetsonUart->Send_TriggerVoice(1,200);//Running the program will voice
+	std::cout << "---------- START for Work ----------" << std::endl;
+	JetsonUart->Send_TriggerVoice(1);//Running the program will voice
 	sleep(1);
 	JetsonUart->Send_TriggerVoice(0);
 
@@ -85,7 +86,7 @@ int main(int argc,char* argv[])
 		#endif
 		if(JetsonVideo->ifGetImageFromCamera())
 		{
-			LOG(INFO) << "---------- Start Prediction ----------";
+			std::cout << "---------- Start Prediction ----------" << std::endl;
 			Classify_id = JetsonVideo->startThread_classify();
 		}
    		if(cv::waitKey(30)>0)
@@ -94,7 +95,6 @@ int main(int argc,char* argv[])
 	pthread_cancel(uart_id);
 	pthread_join(uart_id, NULL);
 	pthread_exit(NULL);
-	google::ShutdownGoogleLogging();
 	return 0;
 }
 
@@ -110,7 +110,7 @@ void server_on_exit(void)
 	delete JetsonUart;
 	JetsonVideo = NULL;
 	JetsonUart  = NULL;
-	LOG(INFO)<< "HAD SUCCESS EXIT";	
+	LOGG("HAD SUCCESS EXIT");	
 }
 
 void signal_exit_handler(int sig)

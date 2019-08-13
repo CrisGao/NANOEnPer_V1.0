@@ -103,7 +103,7 @@ class jetsonSerial
        int UART0_Init(int fd, int speed,int flow_ctrl,int databits,int stopbits,int parity);
 
 
-       void Send_TriggerVoice(int flag);  //use uart to trigger the vehicle voice and lighting
+       void Send_TriggerVoice(int flag,int voice);  //use uart to trigger the vehicle voice and lighting
 
       // uint8_t receiv_buf[100];
 
