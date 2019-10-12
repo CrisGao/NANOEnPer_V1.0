@@ -16,4 +16,5 @@ First release version for enviroment percetion which had built on JetsonNano
   通上电源，双按左右车把五秒看到仪表盘显示99，表示开启JetsonNano板的电源，等待1分钟左右听到“滴滴”连续三声，表示本程序启动。中途任意时刻，可以通过双按左右车把五秒，看到仪表盘显示88表示关闭了JetsonNano板的电源。
 
 该文档中，Test为无效文件，可不予理会。
-JetsonNano自启动脚本在～/test_auto_start文件中
+
+JetsonNano自启动脚本在～/test_auto_start文件中，Ubuntu18.04自启动的方法参见：https://www.cnblogs.com/it-tsz/p/9852301.html
